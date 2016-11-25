@@ -209,6 +209,11 @@ int main( void )
 		xil_printf("\n\Full main is selected\n\r");
 		main_full();
 	}
+	#elif( mainSELECTED_APPLICATION == 2 )
+	{
+		xil_printf("\n\LED main is selected\n\r");
+		led();
+	}
 	#else
 	{
 		xil_printf("\n\lwIP main is selected\n\r");
