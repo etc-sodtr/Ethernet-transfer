@@ -137,7 +137,7 @@
  *
  * When mainSELECTED_APPLICATION is set to 2 the lwIP example will be run.
  */
-#define mainSELECTED_APPLICATION	1
+#define mainSELECTED_APPLICATION	0
 
 /*-----------------------------------------------------------*/
 
@@ -192,7 +192,7 @@ int main( void )
 	/* See http://www.freertos.org/RTOS-Xilinx-Zynq.html for instructions. */
 
 	int led_base_adr = 0x41200000;
-	Xil_Out8(led_base_adr, 0xFF);
+	Xil_Out8(led_base_adr, 0xAA);
 
 	/* Configure the hardware ready to run the demo. */
 	prvSetupHardware();
@@ -208,11 +208,6 @@ int main( void )
 	{
 		xil_printf("\n\Full main is selected\n\r");
 		main_full();
-	}
-	#elif( mainSELECTED_APPLICATION == 2 )
-	{
-		xil_printf("\n\LED main is selected\n\r");
-		led();
 	}
 	#else
 	{
