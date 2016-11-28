@@ -5,4 +5,9 @@
  *      Author: Norbert
  */
 
+static QueueHandle_t xQueue = NULL;
 
+void ethernet_demo(void)
+{
+    xQueue1 = xQueueCreate()
+}
