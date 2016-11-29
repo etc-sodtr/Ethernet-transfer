@@ -156,6 +156,8 @@ static void prvSetupHardware( void );
 	extern void main_full( void );
 #elif ( mainSELECTED_APPLICATION == 2 )
 	extern void main_lwIP( void );
+//#elif ( mainSELECTED_APPLICATION == 3 )
+//	extern void ethernet_demo( void );
 #else
 	#error Invalid mainSELECTED_APPLICATION setting.  See the comments at the top of this file and above the mainSELECTED_APPLICATION definition.
 #endif
@@ -201,18 +203,27 @@ int main( void )
 	file. */
 	#if( mainSELECTED_APPLICATION == 0 )
 	{
-		xil_printf("\n\rBlinky main is selected\n\r");
+		xil_printf("\n\rBlinky main was selected\n\r");
 		main_blinky();
 	}
 	#elif( mainSELECTED_APPLICATION == 1 )
 	{
-		xil_printf("\n\Full main is selected\n\r");
+		xil_printf("\n\Full main was selected\n\r");
 		main_full();
+	}
+	#elif( mainSELECTED_APPLICATION == 2 )
+	{
+		xil_printf("\n\lwIP main was selected\n\r");
+		main_lwIP();
+	}
+	#elif( mainSELECTED_APPLICATION == 3 )
+	{
+		xil_printf("\n\Ethernet_demo was selected\n\r");
+		ethernet_demo();
 	}
 	#else
 	{
-		xil_printf("\n\lwIP main is selected\n\r");
-		main_lwIP();
+		xil_printf("\n\Invalid selection\n\r");
 	}
 	#endif
 
