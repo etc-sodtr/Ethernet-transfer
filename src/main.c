@@ -137,7 +137,7 @@
  *
  * When mainSELECTED_APPLICATION is set to 2 the lwIP example will be run.
  */
-#define mainSELECTED_APPLICATION	0
+#define mainSELECTED_APPLICATION	3
 
 /*-----------------------------------------------------------*/
 
@@ -156,8 +156,8 @@ static void prvSetupHardware( void );
 	extern void main_full( void );
 #elif ( mainSELECTED_APPLICATION == 2 )
 	extern void main_lwIP( void );
-//#elif ( mainSELECTED_APPLICATION == 3 )
-//	extern void ethernet_demo( void );
+#elif ( mainSELECTED_APPLICATION == 3 )
+	extern void ethernet_demo( void );
 #else
 	#error Invalid mainSELECTED_APPLICATION setting.  See the comments at the top of this file and above the mainSELECTED_APPLICATION definition.
 #endif
@@ -193,8 +193,8 @@ int main( void )
 {
 	/* See http://www.freertos.org/RTOS-Xilinx-Zynq.html for instructions. */
 
-	int led_base_adr = 0x41200000;
-	Xil_Out8(led_base_adr, 0xAA);
+	int led_base_adrr = 0x41200000;
+	Xil_Out8(led_base_adrr, 0xAA);
 
 	/* Configure the hardware ready to run the demo. */
 	prvSetupHardware();
@@ -203,27 +203,27 @@ int main( void )
 	file. */
 	#if( mainSELECTED_APPLICATION == 0 )
 	{
-		xil_printf("\n\rBlinky main was selected\n\r");
+		xil_printf("\n\r#####################Blinky main was selected#####################\n\r");
 		main_blinky();
 	}
 	#elif( mainSELECTED_APPLICATION == 1 )
 	{
-		xil_printf("\n\Full main was selected\n\r");
+		xil_printf("\n\r#####################Full main was selected#####################\n\r");
 		main_full();
 	}
 	#elif( mainSELECTED_APPLICATION == 2 )
 	{
-		xil_printf("\n\lwIP main was selected\n\r");
+		xil_printf("\n\r#####################lwIP main was selected#####################\n\r");
 		main_lwIP();
 	}
 	#elif( mainSELECTED_APPLICATION == 3 )
 	{
-		xil_printf("\n\Ethernet_demo was selected\n\r");
+		xil_printf("\n\r#####################Ethernet_demo was selected#####################\n\r");
 		ethernet_demo();
 	}
 	#else
 	{
-		xil_printf("\n\Invalid selection\n\r");
+		xil_printf("\n\r#####################Invalid selection#####################\n\r");
 	}
 	#endif
 
