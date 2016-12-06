@@ -203,27 +203,27 @@ int main( void )
 	file. */
 	#if( mainSELECTED_APPLICATION == 0 )
 	{
-		xil_printf("\n\r#####################Blinky main was selected#####################\n\r");
+		xil_printf("\n\r##################### Blinky main was selected #####################\n\r");
 		main_blinky();
 	}
 	#elif( mainSELECTED_APPLICATION == 1 )
 	{
-		xil_printf("\n\r#####################Full main was selected#####################\n\r");
+		xil_printf("\n\r##################### Full main was selected #####################\n\r");
 		main_full();
 	}
 	#elif( mainSELECTED_APPLICATION == 2 )
 	{
-		xil_printf("\n\r#####################lwIP main was selected#####################\n\r");
+		xil_printf("\n\r##################### lwIP main was selected #####################\n\r");
 		main_lwIP();
 	}
 	#elif( mainSELECTED_APPLICATION == 3 )
 	{
-		xil_printf("\n\r#####################Ethernet_demo was selected#####################\n\r");
+		xil_printf("\n\r##################### Ethernet_demo was selected #####################\n\r");
 		ethernet_demo();
 	}
 	#else
 	{
-		xil_printf("\n\r#####################Invalid selection#####################\n\r");
+		xil_printf("\n\r##################### Invalid selection #####################\n\r");
 	}
 	#endif
 
