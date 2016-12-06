@@ -41,7 +41,6 @@ void ethernet_demo(void)
 //    BaseType_t task3;
 
 
-
     // Queue creation
     xQueue1 = xQueueCreate(QUEUE_LENGTH, sizeof(uint32_t));
 
