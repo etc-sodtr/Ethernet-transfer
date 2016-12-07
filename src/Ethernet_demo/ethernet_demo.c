@@ -43,6 +43,7 @@ void ethernet_demo(void)
 //    BaseType_t task3;
 
 
+
     // Queue creation
     xQueue1 = xQueueCreate(QUEUE_LENGTH, sizeof(uint32_t));
 
@@ -101,8 +102,10 @@ static void initial_sem(void *pvParameters)
     ( void ) pvParameters;
 
     xil_printf("\n\r############	Creating semaphore.....		############\n\r");
+
 //	Creating the semaphore
-    xSemaphore = xSemaphoreCreateMutex();
+    xSemaphore = xSemaphoreCreateBinary();
+    xSemaphoreGive( xSemaphore );
 
     if(xSemaphore == NULL)
     	xil_printf("\n\r##############There was insufficient FreeRTOS heap available for the semaphore to be created successfully.##############\n\r");
