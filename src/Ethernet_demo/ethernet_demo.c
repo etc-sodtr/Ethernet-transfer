@@ -28,6 +28,8 @@ static void wr_queue_task(void *pvParameters);
 static void led_sent_status(void);
 static void led_received_status(void);
 
+static int led_base_adr = 0x41200000;
+
 static SemaphoreHandle_t xSemaphore = NULL;
 static QueueHandle_t xQueue1 = NULL;
 
@@ -55,7 +57,7 @@ void ethernet_demo(void)
                              configMINIMAL_STACK_SIZE,          /*The size of the stack to allocate to the task. */
                              NULL,                              /* Parameter passed into the task. */
 							 INITIAL_SEM_TASK_PRIORITY,         /* Priority at which the task is created. */
-							 &xHandle );                            /* Used to pass out the created task's handle. */
+							 &xHandle );                        /* Used to pass out the created task's handle. */
 
     	task1 = xTaskCreate( rd_queue_task,                     /*The function that implements the task. */
                              "READ_QUEUE",                      /*The text name assigned to the task. */
@@ -100,7 +102,7 @@ static void initial_sem(void *pvParameters)
 
     xil_printf("\n\r############	Creating semaphore.....		############\n\r");
 //	Creating the semaphore
-    xSemaphore = xSemaphoreCreateBinary();
+    xSemaphore = xSemaphoreCreateMutex();
 
     if(xSemaphore == NULL)
     	xil_printf("\n\r##############There was insufficient FreeRTOS heap available for the semaphore to be created successfully.##############\n\r");
@@ -132,9 +134,10 @@ static void rd_queue_task(void *pvParameters)
 									portMAX_DELAY
 								);
 
-//		if( xSemaphoreTake( xSemaphore, 0) == pdTRUE )
-//		{
-//			xil_printf("\n\r###### Read task obtained the semaphore! ######\n\r");
+		if( xSemaphoreTake( xSemaphore, portMAX_DELAY) == pdTRUE )
+		{
+			xil_printf("\n\r");
+			xil_printf("\n\r###### Read task obtained the semaphore! ######\n\r");
 
 			if(rd_queue == pdTRUE )
 				xil_printf("\n\r###### Item succesfully received! ######\n\r");
@@ -146,13 +149,15 @@ static void rd_queue_task(void *pvParameters)
 
 			led_received_status();
 
-//			if( xSemaphoreGive( xSemaphore ) != pdTRUE)
-//				xil_printf("\n\r###### Read task couldn't release the semaphore! ######\n\r");
-//			else
-//				xil_printf("\n\r###### Read task released the semaphore! ######\n\r");
-//		}
-//		else
-//			xil_printf("\n\r###### Read task couldn't obtain the semaphore! ######\n\r");
+			xil_printf("\n\r###### Read task: releasing the semaphore! ######\n\r");
+			xil_printf("\n\r");
+
+			if( xSemaphoreGive( xSemaphore ) != pdTRUE)
+				xil_printf("\n\r###### Read task couldn't release the semaphore! ######\n\r");
+
+		}
+		else
+			xil_printf("\n\r###### Read task couldn't obtain the semaphore! ######\n\r");
     }
 }
 
@@ -168,9 +173,11 @@ static void wr_queue_task(void *pvParameters)
     {
 		wr_queue = (BaseType_t)NULL;
 
-//    	if( xSemaphoreTake( xSemaphore, 0) == pdTRUE )
-//    	{
-//			xil_printf("\n\r###### Write task obtained the semaphore! ######\n\r");
+
+    	if( xSemaphoreTake( xSemaphore, portMAX_DELAY) == pdTRUE )
+    	{
+    		xil_printf("\n\r");
+			xil_printf("\n\r###### Write task obtained the semaphore! ######\n\r");
 
 
 			xil_printf("\n\r###### Sendind item... ######\n\r");
@@ -186,13 +193,14 @@ static void wr_queue_task(void *pvParameters)
 
 			led_sent_status();
 
-//			if( xSemaphoreGive( xSemaphore ) != pdTRUE)
-//				xil_printf("\n\r###### Write task couldn't release the semaphore! ######\n\r");
-//			else
-//				xil_printf("\n\r###### Write task released the semaphore! ######\n\r");
-//    	}
-//    	else
-//    	    xil_printf("\n\r###### Write task couldn't obtain the semaphore! ######\n\r");
+			xil_printf("\n\r###### Write task: releasing the semaphore! ######\n\r");
+			xil_printf("\n\r");
+
+			if( xSemaphoreGive( xSemaphore ) != pdTRUE)
+				xil_printf("\n\r###### Write task couldn't release the semaphore! ######\n\r");
+    	}
+    	else
+    	    xil_printf("\n\r###### Write task couldn't obtain the semaphore! ######\n\r");
     }
 }
 //static void flash_led_task(void *pvParameters)
@@ -219,29 +227,25 @@ static void wr_queue_task(void *pvParameters)
 static void led_sent_status(void)
 {
 	const TickType_t xDelay = 500 / portTICK_PERIOD_MS;
-	int led_base_adr = 0x41200000;
-	static uint8_t led_value = 0xAA;
+	uint8_t led_value = 0xAA;
 
-	led_value = (led_value << 1) | (led_value >> 3);
-	Xil_Out8(led_base_adr, led_value);
-	vTaskDelay( xDelay );
-
-	led_value = (led_value << 1) | (led_value >> 3);
-	Xil_Out8(led_base_adr, led_value);
-	vTaskDelay( xDelay );
+	for(int i = 0; i < 3; i++ )
+	{
+		Xil_Out8(led_base_adr, led_value);
+		vTaskDelay( xDelay );
+		led_value = (led_value << 1) | (led_value >> 3);
+	}
 }
 
 static void led_received_status(void)
 {
 	const TickType_t xDelay = 500 / portTICK_PERIOD_MS;
-	int led_base_adr = 0x41200000;
-	static uint8_t led_value = 0xFF;
+	uint8_t led_value = 0xFF;
 
-	led_value = ~led_value ;
-	Xil_Out8(led_base_adr, led_value);
-	vTaskDelay( xDelay );
-
-	led_value = ~led_value ;
-	Xil_Out8(led_base_adr, led_value);
-	vTaskDelay( xDelay );
+	for(int i = 0; i < 3; i++ )
+	{
+		Xil_Out8(led_base_adr, led_value);
+		vTaskDelay( xDelay );
+		led_value = ~led_value ;
+	}
 }
