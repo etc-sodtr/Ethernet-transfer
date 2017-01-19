@@ -1,4 +1,4 @@
-# Ethernet-transfer
+# PushButton Game
 
 Student: Lajtai Norbert
 
