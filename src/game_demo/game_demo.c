@@ -326,10 +326,10 @@ static void flash_led(void *pvParameters)
     {
     	if( xSemaphoreTake( xSemaphore, portMAX_DELAY ) == pdTRUE )
     	{
-			xSemaphoreGive( xSemaphore );
 			Xil_Out8(led_base_addr, 0x00);
 			vTaskDelayUntil( &xLastWakeTime, xFrequency );
 			Xil_Out8(led_base_addr, 0xFF);
+			xSemaphoreGive( xSemaphore );
 			vTaskDelayUntil( &xLastWakeTime, xFrequency );
     	}
     }
