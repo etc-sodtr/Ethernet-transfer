@@ -20,6 +20,7 @@
 // Project Parameters //
 #define QUEUE_LENGTH    (10)
 
+#define FLASH_LED_TASK_PRIORITY				( tskIDLE_PRIORITY + 2)
 #define READ_QUEUE_TASK_PRIORITY            ( tskIDLE_PRIORITY + 1)
 #define WRITE_QUEUE_TASK_PRIORITY           ( tskIDLE_PRIORITY)
 
@@ -61,25 +62,19 @@ u32 led_base_addr = 0x41200000;
 u32 sw_base_addr = 0x41210000;
 
 // Number to reach by players //
-u8 random_nr = 5;
+u8 random_nr = 0;
 
 // Player Values and ID//
 u8 player1_val = 0;
 u8 player2_val = 0;
 u8 players_ID = 0; //1 - player 1 , 2 - player 2
 
-
-static void initial_sem(void *pvParameters);
 static void rd_queue_task(void *pvParameters);
 static void wr_queue_task(void *pvParameters);
-//static void flash_led_task(void *pvParameters);
-static void led_sent_status(void);
-static void led_received_status(void);
+static void flash_led(void *pvParameters);
 
-static SemaphoreHandle_t xSemaphore = NULL;
 static QueueHandle_t xQueue1 = NULL;
-
-TaskHandle_t xHandle = NULL;
+static SemaphoreHandle_t xSemaphore;
 
 void game_demo(void)
 {
@@ -106,9 +101,14 @@ void game_demo(void)
 
     BaseType_t task1;
     BaseType_t task2;
+    BaseType_t task3;
 
 	 // Queue creation //
 	xQueue1 = xQueueCreate(QUEUE_LENGTH, sizeof(u8));
+
+	// Create Semaphore //
+	xSemaphore = xSemaphoreCreateBinary();
+	xSemaphoreGive( xSemaphore );
 
     if(xQueue1 == NULL)
     {
@@ -130,10 +130,19 @@ void game_demo(void)
                              WRITE_QUEUE_TASK_PRIORITY,         /* Priority at which the task is created. */
                              NULL );                            /* Used to pass out the created task's handle. */
 
-        if((task1 == pdPASS) && (task2 == pdPASS))
+        task3 = xTaskCreate( flash_led,                     /*The function that implements the task. */
+							 "FLASH LED",                     /*The text name assigned to the task. */
+							 configMINIMAL_STACK_SIZE,          /*The size of the stack to allocate to the task. */
+							 NULL,                              /* Parameter passed into the task. */
+							 FLASH_LED_TASK_PRIORITY,         /* Priority at which the task is created. */
+							 NULL );                            /* Used to pass out the created task's handle. */
+
+#if defined DEBUG1
+        if((task1 == pdPASS) && (task2 == pdPASS)&& (task3 == pdPASS))
             xil_printf("\n\r	Tasks created succesfully!	\n\r");
         else
             xil_printf("\n\r###errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY!###\n\r");
+#endif
 
         /* Start the tasks and timer running. */
         xil_printf("\n\rStarting the scheduler........\n\r");
@@ -149,10 +158,6 @@ static void rd_queue_task(void *pvParameters)
 {
     /* Remove compiler warning about unused parameter. */
     ( void ) pvParameters;
-
-    const TickType_t xFrequency = 3000;
-    TickType_t xLastWakeTime;
-    xLastWakeTime = xTaskGetTickCount();
 
     BaseType_t rd_queue = (BaseType_t)NULL;
     u8 rd_buffer = 0;
@@ -175,43 +180,56 @@ static void rd_queue_task(void *pvParameters)
 			else
 				xil_printf("\n\r###### Couldn't read the queue! ######\n\r");
 
-			if(rd_buffer == 1)
+			if( xSemaphoreTake( xSemaphore, portMAX_DELAY ) == pdTRUE )
 			{
-				for(int i = 0; i < 15; i++)
+				if(rd_buffer == 1)
 				{
-					xil_printf(CLS);
-					Xil_Out8(led_base_addr, 0x00);
-					usleep(250000);
-					if(player1_val == random_nr)
+					for(int i = 0; i < 15; i++)
 					{
-						xil_printf(RED"\n\r###### Player 1 won the game! ######\n\r");
-						Xil_Out8(led_base_addr, 0x07);
+						xil_printf(CLS);
+						Xil_Out8(led_base_addr, 0x00);
+						usleep(200000);
+						if(player1_val == random_nr)
+						{
+							xil_printf(RED"\n\r###### Player 1 won the game! ######\n\r");
+							xil_printf(CYAN"\n\r###### Player 2 lost the game! ######\n\r");
+							Xil_Out8(led_base_addr, 0x70);
+						}
+						else
+						{
+							xil_printf(RED"\n\r###### Player 1 lost the game! ######\n\r");
+							xil_printf(CYAN"\n\r###### Player 2 won the game! ######\n\r");
+							Xil_Out8(led_base_addr, 0x07);
+						}
+						usleep(350000);
 					}
-					else
-					{
-						xil_printf(RED"\n\r###### Player 1 lost the game! ######\n\r");
-						Xil_Out8(led_base_addr, 0x70);
-					}
-					usleep(500000);
 				}
-			}
-			if(rd_buffer == 2)
-			{
-				for(int i = 0; i < 10; i++)
+				if(rd_buffer == 2)
 				{
-					xil_printf(CLS);
-					usleep(250000);
-					if(player2_val == random_nr)
-						xil_printf(CYAN"\n\r###### Player 2 won the game! ######\n\r");
-					else
-						xil_printf(CYAN"\n\r###### Player 2 lost the game! ######\n\r");
-					usleep(500000);
+					for(int i = 0; i < 10; i++)
+					{
+						xil_printf(CLS);
+						Xil_Out8(led_base_addr, 0x00);
+						usleep(200000);
+						if(player2_val == random_nr)
+						{
+							xil_printf(RED"\n\r###### Player 1 lost the game! ######\n\r");
+							xil_printf(CYAN"\n\r###### Player 2 won the game! ######\n\r");
+							Xil_Out8(led_base_addr, 0x07);
+						}
+						else
+						{
+							xil_printf(RED"\n\r###### Player 1 won the game! ######\n\r");
+							xil_printf(CYAN"\n\r###### Player 2 lost the game! ######\n\r");
+							Xil_Out8(led_base_addr, 0x70);
+						}
+						usleep(350000);
+					}
 				}
+				if(rd_buffer == 3)
+					xil_printf(WHITE"\n\r###### ERROR!! GO HOME! ######\n\r");
+				xSemaphoreGive( xSemaphore );
 			}
-			if(rd_buffer == 3)
-				xil_printf(WHITE"\n\r###### ERROR!! GO HOME! ######\n\r");
-			vTaskDelayUntil( &xLastWakeTime, xFrequency );
-
     }
 }
 
@@ -232,6 +250,7 @@ static void wr_queue_task(void *pvParameters)
 
     for(;;)
     {
+    	random_nr = rand()%40;
     	wr_queue = (BaseType_t)NULL;
     	players_ID = 0;
     	player1_val = 0;
@@ -240,8 +259,10 @@ static void wr_queue_task(void *pvParameters)
     	swit0 = 0;
     	swit1 = 0;
 
+    	Xil_Out8(led_base_addr, 0x00);
     	xil_printf(CLS);
-    	xil_printf(GREEN"\n\r                                                                    START!!!!!");
+    	xil_printf(GREEN"\n\r                                                                    !!!!! START !!!!!\n\r");
+    	xil_printf(GREEN"                                                                    Number to reach: %d\n\r", random_nr);
 		while((swit0 == 0) && (swit1 == 0))
 		{
 			while((pl_sw_status == 0) && (swit0 == 0) && (swit1 == 0))
@@ -257,10 +278,10 @@ static void wr_queue_task(void *pvParameters)
 
 			xil_printf(RED"\n\r###### Player 1 value: %d #####\n\r", player1_val);
 			xil_printf(CYAN"\n\r###### Player 2 value: %d #####\n\r", player2_val);
-			usleep(6000);
+			usleep(10000);
 			while((pl_sw_status != 0))
 				pl_sw_status = Xil_In8(sw_base_addr);
-			usleep(6000);
+			usleep(10000);
 		}
 
 		if(swit0 == 1)
@@ -282,5 +303,34 @@ static void wr_queue_task(void *pvParameters)
 
 		if(wr_queue != pdTRUE )
 			xil_printf(WHITE"\n\r###### Couldn't write to the queue! ######\n\r");
+    }
+}
+
+static void flash_led(void *pvParameters)
+{
+    /* Remove warning  */
+    ( void ) pvParameters;
+
+    const TickType_t xDelay = 100 / portTICK_PERIOD_MS;
+
+//    Block for x ms. //
+    TickType_t xLastWakeTime;
+    const TickType_t xFrequency = 100;
+
+    // Initialise the xLastWakeTime variable with the current time.
+    xLastWakeTime = xTaskGetTickCount();
+
+    u8 a = 0;
+    u8 b = 0;
+    for(;;)
+    {
+    	if( xSemaphoreTake( xSemaphore, portMAX_DELAY ) == pdTRUE )
+    	{
+			xSemaphoreGive( xSemaphore );
+			Xil_Out8(led_base_addr, 0x00);
+			vTaskDelayUntil( &xLastWakeTime, xFrequency );
+			Xil_Out8(led_base_addr, 0xFF);
+			vTaskDelayUntil( &xLastWakeTime, xFrequency );
+    	}
     }
 }
